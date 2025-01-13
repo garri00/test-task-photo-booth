@@ -36,3 +36,27 @@ The goal is to create an HTTP API for uploading, optimizing, and serving images.
 
 PostgresDB and RabbitMQ runs from docker compose. 
 Main.go service runs from cmd
+
+## env
+```dotenv
+SERVICE_HOST=127.0.0.1
+SERVICE_PORT=8080
+SERVICE_LOGLEVEL=DEBUG
+SERVICE_MODE=TEST
+SERVICE_TLS=false
+SERVICE_CONFIG=./test-task-photo-booth
+
+SERVICE_PGHOST=localhost
+SERVICE_PGPORT=5434
+SERVICE_PGDATABASE=service
+SERVICE_PGUSER=serviceadmin
+SERVICE_PGPASSWORD=servicedbpassword
+SERVICE_PGSSLMODE=disable
+
+SERVICE_RMQHOST=127.0.0.1
+SERVICE_RMQPORT=5672
+SERVICE_RMQUSER=rabbitadmin
+SERVICE_RMQPASSWORD=rabbitpass
+
+
+```
