@@ -1,0 +1,44 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # RabbitMQ broker port
+      - "15672:15672" # Management console port
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitadmin
+      RABBITMQ_DEFAULT_PASS: rabbitpass
+    networks:
+      - rabbitmq_net
+
+  postgres:
+    container_name: service_postgres_db_photo
+    hostname: postgres
+    image: postgres:15
+    restart: always
+    ports:
+      - 5434:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+    environment:
+      POSTGRES_DB: service
+      POSTGRES_USER: serviceadmin
+      POSTGRES_PASSWORD: servicedbpassword
+      PG_LOG_CONNECTIONS: "on"
+      PG_LOG_DISCONNECTIONS: "on"
+      PG_LOG_STATEMENT: "all"
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U serviceadmin -d service" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+    name: service_photo_volume
+
+networks:
+  rabbitmq_net:
+    driver: bridge
