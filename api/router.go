@@ -8,12 +8,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog"
 
 	"test-task-photo-booth/api/handlers"
 	md "test-task-photo-booth/api/middleware"
 	"test-task-photo-booth/api/routes"
+	"test-task-photo-booth/pkg/clients/rabbitmq"
 )
 
 const RequestTimeout = 60
@@ -22,15 +22,15 @@ var skipPaths = []string{"/ping"}
 
 type Router struct {
 	postgresClient *pgxpool.Pool
-	ch             *amqp.Channel
+	rabbitClient   *rabbitmq.RabbitMqClient
 	log            *zerolog.Logger
 }
 
 // NewRouter defines new router instance
-func NewRouter(postgresClient *pgxpool.Pool, ch *amqp.Channel, log *zerolog.Logger) *chi.Mux {
+func NewRouter(postgresClient *pgxpool.Pool, rabbitClient *rabbitmq.RabbitMqClient, log *zerolog.Logger) *chi.Mux {
 	router := &Router{
 		postgresClient: postgresClient,
-		ch:             ch,
+		rabbitClient:   rabbitClient,
 		log:            log,
 	}
 
@@ -63,7 +63,7 @@ func NewRouter(postgresClient *pgxpool.Pool, ch *amqp.Channel, log *zerolog.Logg
 	r.Get("/health-check", handlers.HealthCheck)
 
 	//Mounts /api routes to main router
-	r.Mount("/api", routes.API(router.postgresClient, router.ch, router.log))
+	r.Mount("/api", routes.API(router.postgresClient, router.rabbitClient, router.log))
 
 	return r
 }

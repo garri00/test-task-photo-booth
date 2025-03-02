@@ -13,7 +13,7 @@ import (
 const MigrationFilesDestination = "file://./migrations"
 
 // MigrateUp
-func MigrateUp(configs config.PostgresDBConf, l zerolog.Logger) error {
+func MigrateUp(configs config.PostgresDBConf, l *zerolog.Logger) error {
 	connectionString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", configs.Username, configs.Password, configs.Host, configs.Port, configs.Database)
 
 	mg, err := migrate.New(MigrationFilesDestination, connectionString)

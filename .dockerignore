@@ -1,0 +1,24 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+
+# Ignore intellij and vscode
+.idea
+.vscode
+
+#Git files
+.git
+
+# Env
+.env
+
+# Output of the go coverage tool
+*.out
+
+# Logs
+./logs
+*.log
+
+# Ignore Docker-related files
+Dockerfile*
+.dockerignore

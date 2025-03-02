@@ -60,3 +60,17 @@ SERVICE_RMQPASSWORD=rabbitpass
 
 
 ```
+
+# Build and run
+
+## Build image
+```bash
+ docker build -f .\Dockerfile_consumer -t photo-booth-consumer .
+
+ docker build -f .\Dockerfile_producer -t photo-booth-producer .
+```
+
+## Run compose config
+```bash
+docker-compose up -d  
+```
