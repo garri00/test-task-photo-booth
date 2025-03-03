@@ -16,10 +16,15 @@ import (
 func photo(postgresClient *pgxpool.Pool, rabbitClient *rabbitmq.RabbitMqClient, log *zerolog.Logger, r chi.Router) {
 	photoCollection := postgres.NewPhotoStoragePG(postgresClient, log)
 	photoQueue := rmq.NewPhotoProducer(rabbitClient.Conn, rabbitClient.PhotoQueue, log)
-	photoUseCase := usecases.NewPhotoUseCase(photoCollection, photoQueue, log)
-	photoHandler := handlers.NewPhotoHandler(photoUseCase, log)
+
+	photoUseCase := usecases.NewPhotoUseCase(photoCollection, log)
+	photoPublishUseCase := usecases.NewPhotoPublishUseCase(photoQueue, log)
+
+	photoHandler := handlers.NewPhotoHandler(photoUseCase, photoPublishUseCase, log)
 
 	r.Post("/", photoHandler.Create)
+
+	r.Get("/", photoHandler.GetAllPhotos)
 
 	r.Route("/{id}", func(r chi.Router) {
 		r.Get("/", photoHandler.GetByID)

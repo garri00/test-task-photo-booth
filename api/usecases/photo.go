@@ -12,18 +12,24 @@ import (
 	"test-task-photo-booth/src/entities/dtos"
 )
 
-type PhotoUseCase struct {
-	db    clients.PhotoStorage
+type PhotoPublishUseCase struct {
 	queue clients.PhotoQueue
 	log   *zerolog.Logger
 }
 
-func NewPhotoUseCase(storage clients.PhotoStorage, queue clients.PhotoQueue, l *zerolog.Logger) PhotoUseCase {
-	return PhotoUseCase{
-		db:    storage,
+func NewPhotoPublishUseCase(queue clients.PhotoQueue, l *zerolog.Logger) PhotoPublishUseCase {
+	return PhotoPublishUseCase{
 		queue: queue,
 		log:   l,
 	}
+}
+
+func (p PhotoPublishUseCase) AddInQueue(photo *dtos.Photo) error {
+	if err := p.queue.Publish(photo); err != nil {
+		return fmt.Errorf("error adding photo to queue: %v", err)
+	}
+
+	return nil
 }
 
 const (
@@ -32,15 +38,19 @@ const (
 	photoResize25 = 25
 )
 
-func (p PhotoUseCase) AddInQueue(photo *dtos.Photo) error {
-	if err := p.queue.Publish(photo); err != nil {
-		return fmt.Errorf("error adding photo to queue: %v", err)
-	}
-
-	return nil
+type PhotoConsumeUseCase struct {
+	db  clients.PhotoStorage
+	log *zerolog.Logger
 }
 
-func (p PhotoUseCase) Create(photo *dtos.Photo) error {
+func NewPhotoConsumeUseCase(storage clients.PhotoStorage, l *zerolog.Logger) PhotoConsumeUseCase {
+	return PhotoConsumeUseCase{
+		db:  storage,
+		log: l,
+	}
+}
+
+func (p PhotoConsumeUseCase) Create(photo *dtos.Photo) error {
 	ctx := context.Background()
 
 	decodeData, err := base64.StdEncoding.DecodeString(photo.Data)
@@ -81,6 +91,34 @@ func (p PhotoUseCase) Create(photo *dtos.Photo) error {
 	photo.IsDeleted = photoDB.IsDeleted
 
 	return nil
+}
+
+type PhotoUseCase struct {
+	db  clients.PhotoStorage
+	log *zerolog.Logger
+}
+
+func NewPhotoUseCase(storage clients.PhotoStorage, l *zerolog.Logger) PhotoUseCase {
+	return PhotoUseCase{
+		db:  storage,
+		log: l,
+	}
+}
+
+func (p PhotoUseCase) GetAllPhotos() ([]dtos.Photo, error) {
+	ctx := context.Background()
+	photosList := make([]dtos.Photo, 0)
+
+	photoListDB, err := p.db.FindAll(ctx)
+	if err != nil {
+		return photosList, fmt.Errorf("db.FindAll(): %w", err)
+	}
+
+	for _, photoDB := range photoListDB {
+		photosList = append(photosList, dtos.Photo{ID: photoDB.ID, IsDeleted: photoDB.IsDeleted})
+	}
+
+	return photosList, nil
 }
 
 func (p PhotoUseCase) GetByID(id, quality string) (dtos.Photo, error) {

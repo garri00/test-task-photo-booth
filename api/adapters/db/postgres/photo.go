@@ -68,6 +68,58 @@ func (p photoPgStorage) Create(ctx context.Context, photo *dtos.PhotoDB) error {
 
 var ErrNoPhotoFound = errors.New("didn't find photo")
 
+func (p photoPgStorage) FindAll(ctx context.Context) ([]dtos.PhotoDB, error) {
+	query := `
+		SELECT id, 
+		       data_origin, 
+		       data_75,
+		       data_50,
+		       data_25,
+		       is_deleted
+		FROM service.photos;
+	`
+
+	photosList := make([]dtos.PhotoDB, 0)
+
+	rows, err := p.client.Query(ctx, query)
+	if err != nil {
+		return photosList, fmt.Errorf("client.Query() failed: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var photoPG PhotoPG
+
+		err = rows.Scan(
+			&photoPG.ID,
+			&photoPG.DataOrigin,
+			&photoPG.Data75,
+			&photoPG.Data50,
+			&photoPG.Data25,
+			&photoPG.IsDeleted,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("client.Query() failed: %w", err)
+		}
+
+		photoDB := dtos.PhotoDB{
+			ID:         photoPG.ID.String,
+			DataOrigin: photoPG.DataOrigin.String,
+			Data75:     photoPG.Data75.String,
+			Data50:     photoPG.Data50.String,
+			Data25:     photoPG.Data25.String,
+			IsDeleted:  false,
+		}
+
+		photosList = append(photosList, photoDB)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("client.Query() failed: %w", err)
+	}
+
+	return photosList, nil
+}
+
 func (p photoPgStorage) FindOne(ctx context.Context, id string) (dtos.PhotoDB, error) {
 	query := `
 		SELECT id, 

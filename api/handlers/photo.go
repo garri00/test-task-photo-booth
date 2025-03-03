@@ -12,21 +12,26 @@ import (
 )
 
 type PhotoUseCase interface {
-	AddInQueue(photo *dtos.Photo) error
-	Create(photo *dtos.Photo) error
+	GetAllPhotos() ([]dtos.Photo, error)
 	GetByID(id, quality string) (dtos.Photo, error)
 	Delete(id string) error
 }
 
-type PhotoHandler struct {
-	photoUseCase PhotoUseCase
-	log          *zerolog.Logger
+type PhotoPublishUseCase interface {
+	AddInQueue(photo *dtos.Photo) error
 }
 
-func NewPhotoHandler(photoUseCase PhotoUseCase, log *zerolog.Logger) PhotoHandler {
+type PhotoHandler struct {
+	photoUseCase        PhotoUseCase
+	photoPublishUseCase PhotoPublishUseCase
+	log                 *zerolog.Logger
+}
+
+func NewPhotoHandler(photoUseCase PhotoUseCase, photoPublishUseCase PhotoPublishUseCase, log *zerolog.Logger) PhotoHandler {
 	return PhotoHandler{
-		photoUseCase: photoUseCase,
-		log:          log,
+		photoUseCase:        photoUseCase,
+		photoPublishUseCase: photoPublishUseCase,
+		log:                 log,
 	}
 }
 
@@ -53,13 +58,24 @@ func (h PhotoHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Data: requestData.Data,
 	}
 
-	if err := h.photoUseCase.AddInQueue(photo); err != nil {
+	if err := h.photoPublishUseCase.AddInQueue(photo); err != nil {
 		RespondErr(w, h.log, fmt.Errorf("photoUseCase.AddInQueue(): %w", err), http.StatusInternalServerError)
 
 		return
 	}
 
 	RespondStatusOk(w, h.log)
+}
+
+func (h PhotoHandler) GetAllPhotos(w http.ResponseWriter, r *http.Request) {
+	photos, err := h.photoUseCase.GetAllPhotos()
+	if err != nil {
+		RespondErr(w, h.log, fmt.Errorf("photoUseCase.GetAllPhotos(): %w", err), http.StatusInternalServerError)
+
+		return
+	}
+
+	Respond(w, h.log, photos)
 }
 
 func (h PhotoHandler) GetByID(w http.ResponseWriter, r *http.Request) {

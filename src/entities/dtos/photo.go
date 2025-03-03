@@ -2,7 +2,7 @@ package dtos
 
 type Photo struct {
 	ID        string `json:"id"`
-	Data      string `json:"data"` // Stored in b64
+	Data      string `json:"data,omitempty"` // Stored in b64
 	IsDeleted bool   `json:"isDeleted"`
 }
 
